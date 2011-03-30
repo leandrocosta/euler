@@ -39,33 +39,36 @@ const double DELTA = 1/pow(10,FLOAT_PRECISION+1);
 #define FLOAT_LT(x,y) ((y)-(x) > DELTA)
 #define FLOAT_LE(x,y) (FLOAT_LT((x),(y)) || FLOAT_EQ((x),(y)))
 
-const unsigned int MAX_VALUE = 45;
 const unsigned int CACHE_SIZE = 8 * 1024 * 1024; // * 4 bytes = mem
 
-double inverse_squares[MAX_VALUE+1];
-double max_possible_total[MAX_VALUE+1];
-//vector<double> cache(CACHE_SIZE);
+double* inverse_squares;
+double* max_possible_total;
 vector<double> cache;
 //vector<double> cache_uniq;
 unordered_map<double, unsigned int> cache_hash;
 
-void init_inverse_squares ()
+void init_inverse_squares (unsigned int max_value)
 {
-	for (unsigned int i = 2; i <= MAX_VALUE; i++)
+	inverse_squares = new double[max_value+1];
+
+	for (unsigned int i = 2; i <= max_value; i++)
 	{
 		inverse_squares[i] = 1/pow(i, 2);
 		cout << "inverse_squares[" << i << "]: " << inverse_squares[i] << endl;
 	}
 }
 
-void init_max_possible_total ()
+void init_max_possible_total (unsigned int max_value)
 {
-	max_possible_total[MAX_VALUE] = inverse_squares[MAX_VALUE];
+	max_possible_total = new double[max_value+1];
 
-	for (unsigned int i = MAX_VALUE-1; i >= 2; i--)
+	max_possible_total[max_value] = inverse_squares[max_value];
+
+	for (unsigned int i = max_value-1; i >= 2; i--)
 		max_possible_total[i] = inverse_squares[i] + max_possible_total[i+1];
 }
 
+/*
 void init_cache ()
 {
 	//unsigned int i = 0;
@@ -116,17 +119,38 @@ void init_cache ()
 	//cout << "cache.size (): " << cache.size () << endl;
 	//cout << "cache_uniq.size (): " << cache_uniq.size () << endl;
 }
+*/
 
-void init_cache_pair ()
+const bool promising (unsigned int max_value, unsigned int item, double value)
 {
-	vector<pair<double, unsigned int> > cache;
-	cache.push_back(make_pair<double, unsigned int>(0.0, 1));
-
-	for (unsigned int item = 3; item <= MAX_VALUE && FLOAT_GE(cache.back ().first + max_possible_total[item], 0.25); item++)
+	if (item < max_value)
 	{
-		cout << "item " << item << ": " << inverse_squares[item] << endl;
+		if (item == max_value-1)
+		{
+			return (FLOAT_EQ(value + inverse_squares[max_value], 0.25));
+		} else if (item == max_value-2)
+		{
+			return (FLOAT_EQ(value + inverse_squares[max_value], 0.25) ||
+					FLOAT_EQ(value + inverse_squares[max_value-1], 0.25) ||
+					FLOAT_EQ(value + inverse_squares[max_value] + inverse_squares[max_value-1], 0.25));
+		} else
+		{
+			return (FLOAT_GE(value + max_possible_total[item+1], 0.25) && FLOAT_LE(value + inverse_squares[max_value], 0.25));
+		}
+	}
+	//return (item < max_value && FLOAT_GE(value + max_possible_total[item+1], 0.25) && FLOAT_LE(value + inverse_squares[max_value], 0.25));
+}
 
-		vector<pair<double, unsigned int> > cache_temp;
+void init_cache_pair (unsigned int max_value)
+{
+	vector<pair<double, unsigned short> > cache;
+	cache.push_back(make_pair<double, unsigned short>(0.0, 1));
+
+	for (unsigned int item = 3; item <= max_value && FLOAT_GE(cache.back ().first + max_possible_total[item], 0.25); item++)
+	{
+		cout << "\nitem " << item << ": " << inverse_squares[item] << endl;
+
+		vector<pair<double, unsigned short> > cache_temp;
 
 		//{
 			// get begin for process
@@ -157,7 +181,8 @@ void init_cache_pair ()
 				if (mid > 0)
 					mid--;
 
-				cout << "cache.size (): " << cache.size () << ", max: " << max_possible_total[item] << ", init: " << mid <<", end: " << (cache.size ()-1) << endl;
+				//cout << "cache.size (): " << cache.size () << ", max: " << max_possible_total[item] << ", init: " << mid <<", end: " << (cache.size ()-1) << endl;
+				cout << "cache.size (): " << cache.size () << ", init: " << mid <<", end: " << (cache.size ()-1) << endl;
 			}
 		//}
 
@@ -169,22 +194,38 @@ void init_cache_pair ()
 
 			if (FLOAT_LT(new_value, 0.25))
 			{
-				if (item < MAX_VALUE && FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
+				//if (item < max_value && FLOAT_GE(new_value + max_possible_total[item+1], 0.25) && FLOAT_LE(new_value + inverse_squares[max_value], 0.25))
+				if (promising (max_value, item, new_value))
 				{
-					//cache_temp.push_back (make_pair<double, unsigned int> (new_value, it_cache->second));
-					cache_temp.push_back (make_pair<double, unsigned int> (new_value, cache[i].second));
+					cache_temp.push_back (make_pair<double, unsigned short> (new_value, cache[i].second));
 				}
 			} else if (FLOAT_EQ(new_value, 0.25))
 			{
-				cout << "found!" << endl;
+				cout << "found " << cache[i].second << endl;
 			}
 			else
 				break;
+
+//			if (FLOAT_EQ(new_value, 0.25))
+//			{
+//				cout << "found " << cache[i].second << "!" << endl;
+//			} else if (FLOAT_GT(new_value + inverse_squares[max_value], 0.25))
+//			{
+//				break;
+//			} else if (FLOAT_LT(new_value, 0.25))
+//			{
+//				if (item < max_value && FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
+//				{
+//					cache_temp.push_back (make_pair<double, unsigned short> (new_value, cache[i].second));
+//				}
+//			}
+//			else
+//				break;
 		}
 
 		if (! cache_temp.empty ())
 		{
-			cout << "merging caches..." << endl;
+			cout << "merging caches - cache.size ():" << cache.size () << ", cache_temp.size (): " << cache_temp.size () << endl;
 			cout.flush ();
 			// merge caches
 			//sort (cache_temp.begin (), cache_temp.end ());
@@ -198,6 +239,7 @@ void init_cache_pair ()
 			{
 				if (FLOAT_EQ (cache[i_cache].first, cache_temp[i_cache_temp].first))
 				{
+					//cout << "found duplicate!" << endl;
 					cache[i_cache].second += cache_temp[i_cache_temp].second;
 					i_cache++;
 					i_cache_temp++;
@@ -214,20 +256,28 @@ void init_cache_pair ()
 			while (i_cache_temp < cache_temp_size)
 				cache.push_back(cache_temp[i_cache_temp++]);
 
-			cout << "sorting cache..." << endl;
+			cout << "sorting cache - cache.size ():" << cache.size () << endl;
 			cout.flush ();
 			sort (cache.begin (), cache.end ());
 		}
 	}
 
-	//vector<pair<double, unsigned int> >::const_iterator it_cache_end = cache.end ();
-	//for (vector<pair<double, unsigned int> >::const_iterator it_cache = cache.begin (); it_cache != it_cache_end; ++it_cache)
-	//{
-	//	cout << "first: " << it_cache->first << ", second: " << it_cache->second << endl;
-	//}
+	unsigned int items = 0;
+	unsigned int max_item = 0;
+	vector<pair<double, unsigned short> >::const_iterator it_cache_end = cache.end ();
+	for (vector<pair<double, unsigned short> >::const_iterator it_cache = cache.begin (); it_cache != it_cache_end; ++it_cache)
+	{
+		//cout << "first: " << it_cache->first << ", second: " << it_cache->second << endl;
+		items += it_cache->second;
+		if (it_cache->second > max_item)
+			max_item = it_cache->second;
+	}
 	cout << "cache.size (): " << cache.size () << endl;
+	cout << "items: " << items << endl;
+	cout << "max_item: " << max_item << endl;
 }
 
+/*
 void init_cache_hash ()
 {
 	cache_hash[0.0] = 1;
@@ -277,13 +327,16 @@ void init_cache_hash ()
 
 	cout << "cache_hash.size (): " << cache_hash.size () << endl;
 }
+*/
 
-int main ()
+int main (int argc, char* argv[])
 {
+	unsigned int max_value = atoi(argv[1]);
+
 	cout.precision(FLOAT_PRECISION);
-	init_inverse_squares ();
-	init_max_possible_total ();
+	init_inverse_squares (max_value);
+	init_max_possible_total (max_value);
 	//init_cache ();
 	//init_cache_hash ();
-	init_cache_pair ();
+	init_cache_pair (max_value);
 }
