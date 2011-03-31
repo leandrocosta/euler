@@ -171,7 +171,7 @@ const bool promising (const unsigned int& item, const double& value)
 	return (FLOAT_LT(value, 0.5) && FLOAT_GE(value + max_possible_total[item+1], 0.5));
 }
 
-void check_item(const unsigned int item, const double total, const unsigned int& max_value, vector<unsigned int>& solution)
+void check_item(const unsigned int item, const double total, const unsigned int& max_value, vector<unsigned int>& solution, const unsigned int& items_cache)
 {
 	double value = total + inverse_squares[item];
 
@@ -186,8 +186,11 @@ void check_item(const unsigned int item, const double total, const unsigned int&
 	} else if (item < max_value && promising (item, value))
 	{
 		solution.push_back (item);
-		for (unsigned int i = item + 1; i <= max_value; i++)
-			check_item (i, value, max_value, solution);
+		for (unsigned int i = item + 1; i <= max_value-items_cache; i++)
+			check_item (i, value, max_value, solution, items_cache);
+	
+		// TODO: check if we have solutions in cache
+
 		solution.pop_back ();
 	}
 	/*
@@ -198,7 +201,7 @@ void check_item(const unsigned int item, const double total, const unsigned int&
 	*/
 }
 
-void run_backtracking (unsigned int max_value)
+void run_backtracking (unsigned int& max_value, const unsigned int& items_cache)
 {
 	/*
 	stack<unsigned int> stack_items;
@@ -213,10 +216,11 @@ void run_backtracking (unsigned int max_value)
    double total = 0.0;
    vector<unsigned int> solution;
 
-   for (unsigned int i = 2; i < max_value; i++)
+   for (unsigned int i = 2; i <= max_value-items_cache; i++)
    {
-	   check_item(i, total, max_value, solution);
+	   check_item(i, total, max_value, solution, items_cache);
    }
+	// TODO: check if we have solutions in cache
 }
 
 int main (int argc, char* argv[])
@@ -228,7 +232,11 @@ int main (int argc, char* argv[])
 
 	init_inverse_squares (max_value);
 	init_max_possible_total (max_value);
-	init_cache (max_value, items_cache);
 
-	//run_backtracking (max_value);
+	/*
+	if (items_cache)
+		init_cache (max_value, items_cache);
+	*/
+
+	run_backtracking (max_value, items_cache);
 }
