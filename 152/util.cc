@@ -54,5 +54,16 @@ int main ()
 	cout << "sum (float): " << (1/powf(2,2) + 1/powf(3,2) + 1/powf(4,2)) << endl;
 	cout << "sum (double): " << (1/pow(2,2) + 1/pow(3,2) + 1/pow(4,2)) << endl;
 
+	cout << "total (2-80): " << count(2,80) << endl;
+	cout << "total (3-80): " << count(3,80) << endl;
+	cout << "total (4-80): " << count(4,80) << endl;
+	cout << "total (5-80): " << count(5,80) << endl;
+	cout << "total (6-80): " << count(6,80) << endl;
+	cout << "total (7-80): " << count(7,80) << endl;
+	cout << "total (8-80): " << count(8,80) << endl;
+	cout << "total (2,3): " << (items[2]+items[3]) << ", rem: " << (0.5-items[2]-items[3]) << endl;
+	cout << "total (2,4): " << (items[2]+items[4]) << ", rem: " << (0.5-items[2]-items[4]) << endl;
+	cout << "total (3,4): " << (items[3]+items[4]) << endl;
+
 	return 0;
 }
