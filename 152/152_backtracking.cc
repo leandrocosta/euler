@@ -381,6 +381,7 @@ void check_cache(const double& total, ifstream& cache_file, const vector<unsigne
 			cout << ", " << solution[i];
 
 		cout << ", ... - total: " << total << ", v: " << v << endl;
+		cout.flush();
 		cache_file.read(reinterpret_cast<char*>(&v), sizeof(double));
 	}
 
@@ -391,13 +392,14 @@ void check_item(const unsigned int& item, const double& total_old, const unsigne
 {
 	double total_new = total_old + inverse_squares[item];
 
-	/*
-	cout << "check item ";
+	if (solution.size () < 9)
+	{
+		cout << "check item ";
 
-	for (vector<unsigned int>::const_iterator it = solution.begin (); it != solution.end(); ++it)
-		cout << *it << ", ";
-	cout << item << ", total: " << total_new << endl;
-	*/
+		for (vector<unsigned int>::const_iterator it = solution.begin (); it != solution.end(); ++it)
+			cout << *it << ", ";
+		cout << item << ", total: " << total_new << endl;
+	}
 
 	if (is_solution (total_new))
 	{
@@ -407,6 +409,7 @@ void check_item(const unsigned int& item, const double& total_old, const unsigne
 			cout << ", " << solution[i];
 
 		cout << ", " << item << endl;
+		cout.flush();
 	} else if (item < max_value && promising (item, total_new))
 	{
 		//cout << "promising" << endl;
@@ -464,8 +467,8 @@ int main (int argc, char* argv[])
 	init_inverse_squares (max_value);
 	init_max_possible_total (max_value);
 
-	if (items_cache)
-		init_cache_external (max_value, items_cache);
+	//if (items_cache)
+	//	init_cache_external (max_value, items_cache);
 	/*
 	if (items_cache)
 		init_cache (max_value, items_cache);
