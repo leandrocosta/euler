@@ -5,9 +5,9 @@ using namespace std;
 const bool is_palindrome(const unsigned int& number)
 {
 	cout << "check "<< number << endl;
-	size_t digits = ceil(log10(number));
+	unsigned int digits = ceil(log10(number));
 
-	for (size_t i = 1; i <= digits/2; i++)
+	for (unsigned int i = 1; i <= digits/2; i++)
 	{
 		unsigned int n1 = (number % (unsigned int) pow(10,i)) / (unsigned int) pow(10,i-1);
 		unsigned int n2 = (number % (unsigned int) pow(10,digits-i+1)) / (unsigned int) pow(10,digits-i);
