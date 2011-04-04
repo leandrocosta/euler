@@ -61,6 +61,8 @@ int main ()
 	cout << "total (6-80): " << count(6,80) << endl;
 	cout << "total (7-80): " << count(7,80) << endl;
 	cout << "total (8-80): " << count(8,80) << endl;
+	cout << "total (2-49): " << count(2,49) << endl;
+	cout << "total (50-80): " << count(50,80) << endl;
 	cout << "total (2,3): " << (items[2]+items[3]) << ", rem: " << (0.5-items[2]-items[3]) << endl;
 	cout << "total (2,4): " << (items[2]+items[4]) << ", rem: " << (0.5-items[2]-items[4]) << endl;
 	cout << "total (3,4): " << (items[3]+items[4]) << endl;
