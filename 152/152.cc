@@ -24,6 +24,7 @@ double* inverse_squares;
 double* max_possible_total;
 vector<pair<double, unsigned short> > cache_pair;
 vector<double> cache;
+vector<double> small_ones;
 
 vector<string> files;
 
@@ -158,26 +159,28 @@ void sort_data ()
 {
 	ofstream output(".cache.dat", ios_base::binary);
 
-	cout << "sorting data" << endl;
+	cout << "sorting data..." << endl;
 	vector<ifstream*> fstreams;
 
-	cout << "opening files" << endl;
+	//cout << "opening files" << endl;
 	for (vector<string>::const_iterator it = files.begin (); it != files.end (); ++it)
 	{
 		fstreams.push_back (new ifstream(it->c_str (), ios_base::binary));
 
 		fstreams.back()->seekg(0, ios::end);
-		cout << "file " << it->c_str () << ", size: " << fstreams.back()->tellg() << endl;
+		cout << "file " << it->c_str () << ", size: " << fstreams.back()->tellg();
 		fstreams.back()->seekg(0, ios::beg);
 
 		double value;
 		fstreams.back()->read(reinterpret_cast<char*>(&value), sizeof(double));
-		cout << "first element: " << value << endl;
+		cout << ", first element: " << value << endl;
 
 		fstreams.back()->seekg(0, ios::beg);
 	}
 
-	cout << "getting the very first ones" << endl;
+	//cout << "getting the very first ones" << endl;
+	cout << "merging..." << endl;
+	cout.flush();
 
 	vector<double> firsts;
 
@@ -188,8 +191,6 @@ void sort_data ()
 		//cout << "firsts.push_back(" << value << ")" << endl;
 		firsts.push_back (value);
 	}
-
-	cout << "merging" << endl;
 
 	do
 	{
@@ -212,7 +213,7 @@ void sort_data ()
 
 			if (fstreams[less]->eof ())
 			{
-				cout << "closed!" << endl;
+				//cout << "closed!" << endl;
 				firsts[less] = 0;
 			}
 			else
@@ -225,7 +226,7 @@ void sort_data ()
 		}
 	} while (still_have_data(fstreams));
 
-	cout << "closing files" << endl;
+	//cout << "closing files" << endl;
 
 	for (vector<ifstream*>::iterator it = fstreams.begin (); it != fstreams.end (); ++it)
 	{
@@ -257,13 +258,14 @@ void write_cache_to_file (const vector<double>& cache, const unsigned int& size,
 
 	files.push_back(filename.str());
 
-	cout << "writing finished" << endl;
-	cout.flush();
+	//cout << "writing finished" << endl;
+	//cout.flush();
 }
 
 void generate_data (const unsigned int& max_value, const unsigned int& items_cache)
 {
-	cout << "generating data" << endl;
+	cout << "generating data - " << ((1LL << items_cache) / MEM_ITEMS) << " file(s)..." << endl;
+	cout.flush();
 
 	vector<double> cache_external (MEM_ITEMS);
 	unsigned int index = 0;
@@ -283,11 +285,11 @@ void generate_data (const unsigned int& max_value, const unsigned int& items_cac
 
 		if (index == MEM_ITEMS)
 		{
-			cout << "sorting" << endl;
+			cout << "sorting file " << file_idx << "..." << endl;
 			cout.flush();
 			sort (cache_external.begin (), cache_external.end ());
 
-			cout << "writing to file - i: " << i << endl;
+			//cout << "writing to file..." << endl;
 			write_cache_to_file (cache_external, index, file_idx++);
 			index = 0;
 		}
@@ -295,10 +297,10 @@ void generate_data (const unsigned int& max_value, const unsigned int& items_cac
 
 	if (index > 0)
 	{
-		cout << "sorting" << endl;
+		cout << "sorting file " << file_idx << "..." << endl;
 		sort (cache_external.begin (), cache_external.begin () + index);
 
-		cout << "writing to file - index: " << index << endl;
+		//cout << "writing to file..." << endl;
 		write_cache_to_file (cache_external, index, file_idx);
 	}
 }
@@ -307,6 +309,16 @@ void init_cache_external (const unsigned int& max_value, const unsigned int& ite
 {
 	generate_data (max_value, items_cache);
 	sort_data ();
+}
+
+void init_small_ones (const unsigned int& max_value)
+{
+	double v = inverse_squares[max_value] + inverse_squares[max_value-1];
+
+	for (unsigned int i = max_value; i > 0 && FLOAT_LT(inverse_squares[i], v); i--)
+		small_ones.push_back (inverse_squares[i]);
+
+	cout << "small_ones.size(): " << small_ones.size() << endl;
 }
 
 const bool is_solution (const double& total)
@@ -324,7 +336,6 @@ const bool promising (const unsigned int& item, const double& value, const unsig
 
 void check_cache(const double& total, ifstream& cache_file, const vector<unsigned int>& solution)
 {
-
 	int min = 0;
 	int max = items_in_cache - 1;
 	int mid;
@@ -341,6 +352,8 @@ void check_cache(const double& total, ifstream& cache_file, const vector<unsigne
 		cache_file.clear ();
    		cache_file.open(".cache.dat", ios_base::binary);
 	}
+	else
+		cache_file.seekg(0, ios::beg);
 
 	do
 	{
@@ -376,12 +389,20 @@ void check_cache(const double& total, ifstream& cache_file, const vector<unsigne
 
 	while (FLOAT_EQ(total + v, 0.5))
 	{
-		cout << "solution: " << solution[0];
+		if (solution.size() > 0)
+		{
+			cout << "solution: " << solution[0];
 
-		for (unsigned int i = 1; i < solution.size (); i++)
-			cout << ", " << solution[i];
+			for (unsigned int i = 1; i < solution.size (); i++)
+				cout << ", " << solution[i];
 
-		cout << ", ... - total: " << total << ", v: " << v << endl;
+			cout << ", ... - total: " << total << ", v: " << v << endl;
+		}
+		else
+		{
+			cout << "!!!SOLUTION!!!" << endl;;
+		}
+
 		cout.flush();
 		cache_file.read(reinterpret_cast<char*>(&v), sizeof(double));
 	}
@@ -463,48 +484,111 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 {
 	cout << "running breadthsearch" << endl;
 
-	vector<float> data;
+	vector<double> data;
 	data.push_back (0);
 
 	for (unsigned int item = 3; item <= max_value-items_cache; item++)
 	{
-		cout << "checking item " << item;
+		cout << "checking item " << item << endl;
 
 		size_t size = data.size ();
 
 		for (unsigned int c = 0; c < size; c++)
 		{
-			float new_value = inverse_squares[item] + data[c];
+			double new_value = inverse_squares[item] + data[c];
 
-			if (FLOAT_LT(new_value+inverse_squares[max_value], 0.25))
+			if (item < max_value-small_ones.size() && FLOAT_LT(new_value+inverse_squares[max_value-small_ones.size()], 0.25))
+			//if (FLOAT_LT(new_value+inverse_squares[max_value], 0.25))
+			//if (FLOAT_LT(new_value, 0.25))
 			{
 				if (FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
 					data.push_back(new_value);
 			}
 			else
 			{
-				if (FLOAT_EQ(new_value, 0.25) || FLOAT_EQ(new_value+inverse_squares[max_value], 0.25))
-					cout << "solution" << endl;
+				for (vector<double>::iterator it = small_ones.begin(); it != small_ones.end(); ++it)
+				{
+					if (FLOAT_EQ(new_value+*it, 0.25))
+					{
+						cout << "!!!SOLUTION!!! (small_ones)" << endl;
+						break;
+					}
+					/*
+					else
+					{
+						if (item == 28)
+						{
+							cout << "checking new_value: " << new_value << ", small_one: " << *it << endl;
+						}
+					}
+					*/
+				}
+					/*
+				if (FLOAT_EQ(new_value, 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-1], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-2], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-3], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-4], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-5], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-6], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-7], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-8], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-9], 0.25)
+						|| FLOAT_EQ(new_value+inverse_squares[max_value-10], 0.25))
+				//if (FLOAT_EQ(new_value, 0.25) || FLOAT_EQ(new_value+inverse_squares[max_value], 0.25))
+				//if (FLOAT_EQ(new_value, 0.25))
+					cout << "!!!SOLUTION!!!" << endl;
+					*/
 
-				break;
+				//break;
 			}
 		}
 
 		sort (data.begin (), data.end ());
-		cout << " - data.size(): " << data.size() << "/" << pow(2, item-2) << ", total - last: " << data.back() << ", last-1: " << *(data.end()-2) << ", middle: " << data[data.size()/2] <<", first: " << data.front() << ", max_possible_total[" << (item+1) << "]: " << max_possible_total[item+1] << endl;
+		//cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", total - last: " << data.back() << ", last-1: " << *(data.end()-2) << ", middle: " << data[data.size()/2] <<", first: " << data.front() << ", max_possible_total[" << (item+1) << "]: " << max_possible_total[item+1] << endl;
 
-		vector<float>::iterator it = data.begin();
+		vector<double>::iterator it = data.begin();
+		/*
 		while (FLOAT_LE(*it + max_possible_total[item+1], 0.25))
 		{
 			if (FLOAT_EQ(*it + max_possible_total[item+1], 0.25))
-				cout << "solution" << endl;
+				cout << "!!!SOLUTION!!!" << endl;
 
 			++it;
 		}
+		*/
+		if (it != data.end() && item < max_value)
+		{
+			while (it != data.end() && FLOAT_LE(*it + max_possible_total[item+1], 0.25))
+			{
+				if (FLOAT_EQ(*it + max_possible_total[item+1], 0.25))
+					cout << "!!!SOLUTION!!!" << endl;
 
-		data.erase(data.begin(), it);
+				++it;
+			}
 
-		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << " after erasing, first: " << data.front() << endl;
+			data.erase(data.begin(), it);
+		}
+		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << endl;
+	}
+
+	if (items_cache)
+	{
+		vector<unsigned int> solution;
+		ifstream cache_file(".cache.dat", ios_base::binary);
+
+		cache_file.seekg(0, ios::end);
+		items_in_cache = cache_file.tellg()/sizeof(double);
+		cache_file.seekg(0, ios::beg);
+
+		cout << "checking cache..." << endl;
+		cout.flush();
+
+		for (vector<double>::iterator it = data.begin(); it != data.end(); ++it)
+		{
+			check_cache(0.25 + *it, cache_file, solution);
+		}
 	}
 }
 
@@ -518,8 +602,11 @@ int main (int argc, char* argv[])
 	init_inverse_squares (max_value);
 	init_max_possible_total (max_value);
 
-	//if (items_cache)
-	//	init_cache_external (max_value, items_cache);
+	if (items_cache)
+		init_cache_external (max_value, items_cache);
+
+	init_small_ones(max_value);
+
 	/*
 	if (items_cache)
 		init_cache (max_value, items_cache);

@@ -42,6 +42,8 @@ int main ()
 	cout << "total (2-" << MAX_INDEX << "): " << count(2, MAX_INDEX) << endl;
 	cout << "total (46-" << MAX_INDEX << "): " << count(46, MAX_INDEX) << endl;
 	cout << "total (6,8-11,13-14,16-19,21-27,29-34,36-45): " << (items[6] + count(8,11) + count(13,14) + count(16,19) + count(21,27) + count(29,34) + count(36,45)) << endl;
+	cout << "total (2-5,7,12,15,20,28)-0.25: " << (count(2,5) + items[7] + items[12] + items[15] + items[20] + items[28] - 0.25) << endl;
+	cout << "total (2-5,7,12,15,20,28): " << (count(2,5) + items[7] + items[12] + items[15] + items[20] + items[28]) << endl;
 	cout << "total (2-5,7,12,15,20,28,35): " << (count(2,5) + items[7] + items[12] + items[15] + items[20] + items[28] + items[35]) << endl;
 	cout << "3-END: " << count(3, MAX_INDEX) << endl;
 
