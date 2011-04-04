@@ -506,22 +506,22 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 			}
 			else
 			{
-				for (vector<double>::iterator it = small_ones.begin(); it != small_ones.end(); ++it)
+				for (unsigned int i = 0; i < i < small_ones.size() && item+i <= max_value; i++)
 				{
-					if (FLOAT_EQ(new_value+*it, 0.25))
+					if (FLOAT_EQ(new_value + small_ones[i], 0.25))
 					{
-						cout << "!!!SOLUTION!!! (small_ones)" << endl;
+						cout << "!!!SOLUTION!!! (small_ones) - new_value: " << new_value << ", small_one: " << small_ones[i] << endl;
 						break;
 					}
 					/*
-					else
-					{
-						if (item == 28)
-						{
-							cout << "checking new_value: " << new_value << ", small_one: " << *it << endl;
-						}
-					}
-					*/
+					   else
+					   {
+					   if (item == 28)
+					   {
+					   cout << "checking new_value: " << new_value << ", small_one: " << *it << endl;
+					   }
+					   }
+					   */
 				}
 					/*
 				if (FLOAT_EQ(new_value, 0.25)
