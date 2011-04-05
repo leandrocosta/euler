@@ -25,6 +25,7 @@ double* max_possible_total;
 vector<pair<double, unsigned short> > cache_pair;
 vector<double> cache;
 vector<double> small_ones;
+unsigned int first_small_one;
 
 vector<string> files;
 
@@ -316,9 +317,9 @@ void init_small_ones (const unsigned int& max_value)
 	double v = inverse_squares[max_value] + inverse_squares[max_value-1];
 
 	for (unsigned int i = max_value; i > 0 && FLOAT_LT(inverse_squares[i], v); i--)
-		small_ones.push_back (inverse_squares[i]);
+		first_small_one = i;
 
-	cout << "small_ones.size(): " << small_ones.size() << endl;
+	cout << "first_small_one: " << first_small_one << endl;
 }
 
 const bool is_solution (const double& total)
@@ -497,20 +498,24 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 		{
 			double new_value = inverse_squares[item] + data[c];
 
-			if (item < max_value-small_ones.size() && FLOAT_LT(new_value+inverse_squares[max_value-small_ones.size()], 0.25))
+			if (FLOAT_LT(new_value+inverse_squares[first_small_one], 0.25))
 			//if (FLOAT_LT(new_value+inverse_squares[max_value], 0.25))
 			//if (FLOAT_LT(new_value, 0.25))
 			{
 				if (FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
 					data.push_back(new_value);
 			}
-			else
+			else if (FLOAT_EQ(new_value, 0.25))
 			{
-				for (unsigned int i = 0; i < i < small_ones.size() && item+i <= max_value; i++)
+				cout << "!!!SOLUTION!!!" << endl;
+				break;
+			}
+			else {
+				for (unsigned int i = (item < first_small_one ? first_small_one:item+1); i <= max_value; i++)
 				{
-					if (FLOAT_EQ(new_value + small_ones[i], 0.25))
+					if (FLOAT_EQ(new_value + inverse_squares[i], 0.25))
 					{
-						cout << "!!!SOLUTION!!! (small_ones) - new_value: " << new_value << ", small_one: " << small_ones[i] << endl;
+						cout << "!!!SOLUTION!!! (small_ones) - new_value: " << new_value << ", small_one: " << i << endl;
 						break;
 					}
 					/*
@@ -523,6 +528,12 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 					   }
 					   */
 				}
+
+				if (FLOAT_GE(new_value+inverse_squares[max_value], 0.25))
+				{
+					break;
+				}
+
 					/*
 				if (FLOAT_EQ(new_value, 0.25)
 						|| FLOAT_EQ(new_value+inverse_squares[max_value], 0.25)
@@ -570,7 +581,7 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 
 			data.erase(data.begin(), it);
 		}
-		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << endl;
+		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << data.front() << ", last: " << data.back() << endl;
 	}
 
 	if (items_cache)
@@ -592,7 +603,7 @@ void run_breadthsearch (unsigned int& max_value, const unsigned int& items_cache
 	}
 }
 
-int main (int argc, char* argv[])
+void try1(int argc, char* argv[])
 {
 	unsigned int max_value = atoi(argv[1]);
 	unsigned int items_cache = atoi(argv[2]);
@@ -615,4 +626,180 @@ int main (int argc, char* argv[])
 
 	//run_backtracking (max_value, items_cache);
 	run_breadthsearch (max_value, items_cache);
+}
+
+void generate_small_ones(size_t& max_value, unsigned int item_from, const double max_item)
+{
+	cout << "generating small ones - item_from: " << item_from << ", max_item: " << max_item << endl;
+	cout.flush();
+
+	small_ones.clear();
+	small_ones.push_back(0);
+
+	for (size_t i = max_value; i >= item_from; i--)
+	{
+		cout << "small ones checking item " << i << ", small_ones.size(): " << small_ones.size() << endl;
+
+		size_t size = small_ones.size();
+
+		for (size_t c = 0; c < size; c++)
+		{
+			double new_value = inverse_squares[i] + small_ones[c];
+
+			if (new_value <= max_item)
+				small_ones.push_back(new_value);
+			else
+				break;
+		}
+
+		if (small_ones.size() > size)
+			sort (small_ones.begin(), small_ones.end());
+	}
+	cout << "small_ones.size(): " << small_ones.size() << endl;
+}
+
+void generate_big_ones(size_t& max_value, unsigned int item_from, const double min_item)
+{
+	cout << "generating big ones - item_from: " << item_from << ", min_item: " << min_item << ", max_possible: " << max_possible_total[item_from] << endl;
+	cout.flush();
+
+	small_ones.clear();
+	small_ones.push_back(max_possible_total[item_from]);
+
+	for (size_t i = item_from; i <= max_value; i++)
+	{
+		cout << "big ones checking item " << i << ", small_ones.size(): " << small_ones.size() << endl;
+
+		size_t size = small_ones.size();
+
+		for (size_t c = size-1; c >= 0; c--)
+		{
+			double new_value = small_ones[c] - inverse_squares[i];
+
+			if (new_value >= min_item)
+			{
+				if (new_value <= 0.25)
+					small_ones.push_back(new_value);
+			}
+			else
+				break;
+		}
+
+		if (small_ones.size() > size)
+			sort (small_ones.begin(), small_ones.end());
+	}
+	cout << "small_ones.size(): " << small_ones.size() << endl;
+}
+
+
+void run_breadthsearch_step (unsigned int& max_value)
+{
+	cout << "running breadthsearch_step" << endl;
+
+	vector<double> data;
+	data.push_back (0);
+
+	for (unsigned int item = 3; item <= max_value; item++)
+	{
+		cout << "checking item " << item << endl;
+
+		size_t size = data.size ();
+
+		for (unsigned int c = 0; c < size; c++)
+		{
+			double new_value = inverse_squares[item] + data[c];
+
+			if (FLOAT_LT(new_value, 0.25))
+			{
+				if (FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
+					data.push_back(new_value);
+			}
+			else if (FLOAT_EQ(new_value, 0.25))
+			{
+				cout << "!!!SOLUTION!!!" << endl;
+				break;
+			}
+			else
+				break;
+		}
+
+		sort (data.begin (), data.end ());
+		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << data.front() << ", last: " << data.back() << endl;
+
+		//if (data.size() >= 1*1024*1024)
+		if (item >= 30)
+		{
+			/*
+			 * generate small ones
+			 * find solutions using small ones
+			 * remove last ones from data
+			 */
+
+			size_t i = 0;
+			vector<double>::iterator it;
+
+			//generate_small_ones(max_value, item+1, (item+1 < max_value-45 ? inverse_squares[max_value-57]:0.25 - data[3*(data.size()/4)]));
+			generate_small_ones(max_value, item+1, 0.25 - data[14*(data.size()/16)]);
+
+			for (it = data.end()-1; it != data.begin(); --it)
+			{
+				while (i < small_ones.size() && FLOAT_LT(*it + small_ones[i], 0.25))
+					i++;
+
+				if (i < small_ones.size())
+				{
+					if (FLOAT_EQ (*it + small_ones[i], 0.25))
+						cout << "!!!SOLUTION!!! (small_ones)" << endl;
+				}
+				else
+					break;
+			}
+
+			data.erase(++it, data.end());
+
+			cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << data.front() << ", last: " << data.back() << " (after erase small ones)" << endl;
+
+			generate_big_ones(max_value, item+1, 0.25 - data[3*(data.size()/8)]);
+			i = small_ones.size()-1;
+
+			for (it = data.begin()+1; it != data.end(); ++it)
+			{
+				while (i > 0 && FLOAT_GT(*it + small_ones[i], 0.25))
+					i--;
+
+				if (i > 0)
+				{
+					if (FLOAT_EQ (*it + small_ones[i], 0.25))
+						cout << "!!!SOLUTION!!! (big_ones)" << endl;
+				}
+				else
+					break;
+			}
+
+			data.erase(data.begin()+1, it);
+
+			cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << data.front() << ", last: " << data.back() << " (after erase big ones)" << endl;
+		}
+	}
+}
+
+void try2(int argc, char* argv[])
+{
+	unsigned int max_value = atoi(argv[1]);
+
+	cout.precision(FLOAT_PRECISION);
+
+	init_inverse_squares (max_value);
+	init_max_possible_total (max_value);
+
+	run_breadthsearch_step(max_value);
+	//generate_small_ones(max_value, 30, 0.002);
+
+	//for (size_t i = 0; i < small_ones.size(); i++)
+	//	cout << small_ones[i] << endl;
+}
+
+int main (int argc, char* argv[])
+{
+	try2(argc, argv);
 }
