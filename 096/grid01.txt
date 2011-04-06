@@ -20,37 +20,43 @@
  -----------------
  6 9 3 3 7 3 3 9 6 = 49
 
-BEGIN main
-	m = matrix of sudoku
+BEGIN SolveSudoku
+	INPUT: a sudoku 9x9 matrix M
+	OUTPUT: a solved sudoku 9x9 matrix S
+		    NULL if the solution doesn't exist
 
-	absentx = array where absentx(x) = set of all absent numbers from line x
-	absenty = array where absenty(y) = set of all absent numbers from column y
+	MAVAILABLE <= empty 9x9 matrix
+	LBSENT <= array where LABSENT[i] = set of all absent numbers of line i
+	CBSENT <= array where CABSENT[j] = set of all absent numbers of column j
 
-	possiblexy = matrix where possiblexy(x,y) = intersection between absentx(x) and absenty(y)
+	FOR each empty position (i,j) of M
+		MAVAILABLE(i,j) = intersection between LABSENT(i) and CABSENT(j)
 
-	find_solution(m, possiblexy)
+	RETURN getSolution(M, MAVAILABLE)
 END
 
-BEGIN find_solution(m, possiblexy)
-	WHILE there is possiblexy(x1,y1) of size 1:
-		m[x1,y1] = possiblexy(x1,y1)
-		remove m[x1,y1] from all possiblexy(x,y) where x = x1 or y = y1
+BEGIN getSolution
+	INPUT: a sudoku 9x9 matrix M
+		   a 9x9 matrix MAVAILABLE with all available numbers for each empty position of M
 
-	IF we have a solution
-		print solution
-		exit
-	ELSE IF we still have possiblexy(x,y) > 0
-		// now we have to try
+	WHILE there is x,y such that MAVAILABLE(x,y) has size 1:
+		M(x,y) = MAVAILABLE(x,y)
+		MAVAILABLE(i,j) -= {M(x,y)} if i=x or j=y
+	
+	IF (M is not valid)
+		RETURN NULL
+	ELSE IF (M is a solution)
+		RETURN M
+	ELSE
+		x,y = i,j from which MAVAIABLE(i,j) has the smallest
 
-		get x1,y1 where size of possiblexy(x1,y1) is the smallest > 0
+		FOR EACH n FROM MAVAILABLE(x,y) DO
+			NEW_M = M
+			NEW_MAVAILABLE = MAVAILABLE
 
-		FOR EACH value FROM possiblexy(x1,y1):
-			// try it:
-			new_m = m
-			new_possiblexy = possiblexy
-
-			new_m[x1,y1] = new_possiblexy(x1,y1)
-			remove new_m[x1,y1] from all new_possiblexy(x,y) where x = x1 or y = y1
-			find_solution(new_m, new_possiblexy)
+			NEW_M(x,y) = n
+			NEW_MAVAILABLE(i,j) -= {N} if i=x or j=y
+			return getSolution(NEW_M, NEW_MAVAILABLE)
+		END FOR
 	END IF
 END
