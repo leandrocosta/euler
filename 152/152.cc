@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstdio>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -30,6 +31,7 @@ unsigned int first_small_one;
 vector<string> files;
 
 size_t items_in_cache;
+size_t solutions = 0;
 
 void init_inverse_squares (const unsigned int& max_value)
 {
@@ -799,7 +801,213 @@ void try2(int argc, char* argv[])
 	//	cout << small_ones[i] << endl;
 }
 
+void generate_cache(vector<double>& v, size_t from, size_t to)
+{
+	cout << "generating cache - from: " << from << ", to: " << to << endl;
+	cout.flush();
+
+	v.clear();
+	v.push_back(0);
+
+	for (size_t i = from; i <= to; i++)
+	{
+		size_t size = v.size();
+
+		for (size_t c = 0; c < size; c++)
+		{
+			v.push_back(inverse_squares[i] + v[c]);
+		}
+	}
+
+	sort (v.begin(), v.end());
+	cout << "v.size(): " << v.size() << endl;
+}
+
+void try3(int argc, char* argv[])
+{
+	size_t max_value = atoi(argv[1]);
+
+	size_t cache1_from = 27;
+	size_t cache1_to = 53;
+	size_t cache2_from = 54;
+	size_t cache2_to = 80;
+
+	size_t cache1_size = pow(2, cache1_to-cache1_from+1);
+	size_t cache2_size = pow(2, cache2_to-cache2_from+1);
+
+	cout << "cache1_size: " << cache1_size << ", cache2_size: " << cache2_size << endl;
+
+	vector<double> cache1(cache1_size);
+	vector<double> cache2(cache2_size);
+
+	init_inverse_squares (max_value);
+	init_max_possible_total (max_value);
+
+	generate_cache(cache1, cache1_from, cache1_to);
+	generate_cache(cache2, cache2_from, cache2_to);
+
+	vector<double> data;
+	data.push_back (0);
+
+	for (unsigned int item = 3; item < cache1_from; item++)
+	{
+		cout << "checking item " << item << endl;
+
+		size_t size = data.size ();
+
+		for (unsigned int c = 0; c < size; c++)
+		{
+			double new_value = inverse_squares[item] + data[c];
+
+			if (FLOAT_LT(new_value, 0.25))
+			{
+				if (FLOAT_GE(new_value + max_possible_total[item+1], 0.25))
+					data.push_back(new_value);
+			}
+			else if (FLOAT_EQ(new_value, 0.25))
+				solutions++;
+			else
+				break;
+		}
+
+		cout << "sorting data..." << endl;
+		sort (data.begin (), data.end ());
+		cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << *(data.begin()+1) << ", last: " << data.back() << endl;
+
+		cout << "searching for small items to erase..." << endl;
+
+		vector<double>::iterator it;
+
+		for (it = data.begin()+1; it != data.end(); ++it)
+		{
+			if (FLOAT_EQ(*it+max_possible_total[item+1], 0.25))
+				solutions++;
+			else if (FLOAT_GT(*it+max_possible_total[item+1], 0.25))
+				break;
+		}
+
+		if (it != data.begin()+1)
+		{
+			cout << "erasing small ones..." << endl;
+			data.erase(data.begin()+1, it);
+			cout << "data.size(): " << data.size() << "/" << pow(2, item-2) << ", first: " << *(data.begin()+1) << ", last: " << data.back() << " (after erasing small ones)" << endl;
+		}
+	}
+
+	cout << "data - first: " << *(data.begin()+1) << ", last: " << data.back() << endl;
+	cout << "cache1 - first: " << *(cache1.begin()+1) << ", last: " << cache1.back() << endl;
+	cout << "cache2 - first: " << *(cache2.begin()+1) << ", last: " << cache2.back() << endl;
+
+	cout << "searching for solutions..." << endl;
+
+	printf("\033[s");
+
+	for (size_t i = 0; i < data.size(); i++)
+	{
+		printf("\033[u");
+		cout << (i+1) << "/" << data.size() << ", solutions: " << solutions;
+		cout.flush();
+
+		double v = 0.25-data[i]-cache2.back();
+
+		int min = 0;
+		int max = cache1.size() - 1;
+		int mid;
+
+		do
+		{
+			mid = min + (max - min)/2;
+
+			if (FLOAT_LT(cache1[mid], v))
+				min = mid+1;
+			else
+				max = mid-1;
+		} while (!FLOAT_EQ(v, cache1[mid]) && min <= max);
+
+		while (mid > 0 && FLOAT_GE(cache1[mid], v))
+			mid--;
+
+		for (size_t i1 = mid+1; i1 < cache1.size() && FLOAT_LE(data[i]+cache1[i1], 0.25); i1++)
+		{
+			double v = 0.25-data[i]-cache1[i1];
+
+			int min = 0;
+			int max = cache2.size() - 1;
+			int mid;
+
+			do
+			{
+				mid = min + (max - min)/2;
+
+				if (FLOAT_LT(cache2[mid], v))
+					min = mid+1;
+				else
+					max = mid-1;
+			} while (!FLOAT_EQ(v, cache2[mid]) && min <= max);
+
+			while (mid > 0 && FLOAT_GE(cache2[mid], v))
+				mid--;
+
+			while (++mid < cache2.size() && FLOAT_EQ(data[i]+cache1[i1]+cache2[mid], 0.25))
+				solutions++;
+		}
+	
+
+
+		/*
+		if (FLOAT_LT(0.25-data[i], cache1[cache1.size()/2]))
+		{
+			for (size_t i1 = 0; i1 < cache1.size() && FLOAT_LE(data[i]+cache1[i1], 0.25); i1++)
+			{
+				if (FLOAT_LT(0.25-data[i]-cache1[i1], cache2[cache2.size()/2]))
+				{
+					for (size_t i2 = 0; i2 < cache2.size() && FLOAT_LE(data[i]+cache1[i1]+cache2[i2], 0.25); i2++)
+					{
+						if (FLOAT_EQ(data[i]+cache1[i1]+cache2[i2], 0.25))
+							solutions++;
+					}
+				}
+				else
+				{
+					for (int i2 = cache2.size()-1; i2 >= 0 && FLOAT_GE(data[i]+cache1[i1]+cache2[i2], 0.25); i2--)
+					{
+						if (FLOAT_EQ(data[i]+cache1[i1]+cache2[i2], 0.25))
+							solutions++;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int i1 = cache1.size()-1; i1 >= 0 && FLOAT_GE(data[i]+cache1[i1]+cache2.back(), 0.25); i1--)
+			{
+				if (FLOAT_LT(0.25-data[i]-cache1[i1], cache2[cache2.size()/2]))
+				{
+					for (size_t i2 = 0; i2 < cache2.size() && FLOAT_LE(data[i]+cache1[i1]+cache2[i2], 0.25); i2++)
+					{
+						if (FLOAT_EQ(data[i]+cache1[i1]+cache2[i2], 0.25))
+							solutions++;
+					}
+				}
+				else
+				{
+					for (int i2 = cache2.size()-1; i2 >= 0 && FLOAT_GE(data[i]+cache1[i1]+cache2[i2], 0.25); i2--)
+					{
+						if (FLOAT_EQ(data[i]+cache1[i1]+cache2[i2], 0.25))
+							solutions++;
+					}
+				}
+			}
+		}
+		*/
+	}
+
+	cout << endl;
+	cout << "solutions: " << solutions << endl;
+}
+
 int main (int argc, char* argv[])
 {
-	try2(argc, argv);
+	cout.precision(FLOAT_PRECISION);
+	try3(argc, argv);
 }
