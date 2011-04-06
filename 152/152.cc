@@ -825,12 +825,28 @@ void generate_cache(vector<double>& v, size_t from, size_t to)
 
 void try3(int argc, char* argv[])
 {
-	size_t max_value = atoi(argv[1]);
+	size_t max_value = 80; //atoi(argv[1]);
 
 	size_t cache1_from = 27;
 	size_t cache1_to = 53;
 	size_t cache2_from = 54;
 	size_t cache2_to = 80;
+
+	/*
+	size_t max_value = 40; //atoi(argv[1]);
+
+	size_t cache1_from = 15;
+	size_t cache1_to = 27;
+	size_t cache2_from = 28;
+	size_t cache2_to = 40;
+
+	size_t max_value = 50; //atoi(argv[1]);
+
+	size_t cache1_from = 25;
+	size_t cache1_to = 37;
+	size_t cache2_from = 38;
+	size_t cache2_to = 50;
+	*/
 
 	size_t cache1_size = pow(2, cache1_to-cache1_from+1);
 	size_t cache2_size = pow(2, cache2_to-cache2_from+1);
@@ -905,11 +921,10 @@ void try3(int argc, char* argv[])
 	for (size_t i = 0; i < data.size(); i++)
 	{
 		printf("\033[u");
-		cout << (i+1) << "/" << data.size() << ", solutions: " << solutions;
+		cout << setw(7) << setfill('0') << (i+1) << "/" << data.size() << ", solutions: " << solutions;
 		cout.flush();
 
 		double v = 0.25-data[i]-cache2.back();
-
 		int min = 0;
 		int max = cache1.size() - 1;
 		int mid;
@@ -924,9 +939,55 @@ void try3(int argc, char* argv[])
 				max = mid-1;
 		} while (!FLOAT_EQ(v, cache1[mid]) && min <= max);
 
-		while (mid > 0 && FLOAT_GE(cache1[mid], v))
+		while (mid >= 0 && FLOAT_GE(cache1[mid], v))
 			mid--;
 
+		size_t i1 = mid+1;
+
+		if (i1 < cache1.size())
+		{
+			v = 0.25-data[i]-cache1[i1];
+			min = 0;
+			max = cache2.size() - 1;
+			mid;
+
+			do
+			{
+				mid = min + (max - min)/2;
+
+				if (FLOAT_LT(cache2[mid], v))
+					min = mid+1;
+				else
+					max = mid-1;
+			} while (!FLOAT_EQ(v, cache2[mid]) && min <= max);
+
+			while (mid < cache2.size() && FLOAT_LE(cache2[mid], v))
+				mid++;
+
+			size_t i2 = mid-1;
+
+			for (; i1 < cache1.size() && FLOAT_LE(data[i]+cache1[i1], 0.25); i1++)
+			{
+				if (FLOAT_EQ(data[i]+cache1[i1], 0.25))
+					solutions++;
+				else
+				{
+					while (i2 < cache2.size() && FLOAT_EQ(cache2[i2], cache2[i2+1]))
+						i2++;
+
+					while (i2 > 0 && FLOAT_GT(data[i]+cache1[i1]+cache2[i2], 0.25))
+						i2--;
+
+					while (i2 > 0 && FLOAT_EQ(data[i]+cache1[i1]+cache2[i2], 0.25))
+					{
+						solutions++;
+						i2--;
+					}
+				}
+			}
+		}
+
+			/*
 		for (size_t i1 = mid+1; i1 < cache1.size() && FLOAT_LE(data[i]+cache1[i1], 0.25); i1++)
 		{
 			double v = 0.25-data[i]-cache1[i1];
@@ -951,6 +1012,7 @@ void try3(int argc, char* argv[])
 			while (++mid < cache2.size() && FLOAT_EQ(data[i]+cache1[i1]+cache2[mid], 0.25))
 				solutions++;
 		}
+				*/
 	
 
 
