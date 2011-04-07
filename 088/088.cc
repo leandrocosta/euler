@@ -136,6 +136,95 @@
  * 		RETURN sum
  * END
  *
+ * ***
+ *
+ * Algorithm getSumOfMPSs
+ *
+ * INPUT:	The maximum k: MAXK
+ * OUTPUT:	The sum of MPSs from k=2 to MAXK
+ *
+ * BEGIN
+ *		MPSs <- empty set
+ *
+ *		FOR k from 2 to MAXK
+ *			mps <- getMPS(k)
+ *			MPSs <- MPSs U { mps }
+ *		END FOR
+ *
+ *		RETURN  sum of MPSs's elements
+ * END
+ *
+ * Algorithm getMPS
+ *
+ * INPUT:	The number of elements K
+ * OUTPUT:	The MPS of k
+ *
+ * BEGIN
+ *		mps <- 0
+ *		t <- K
+ *
+ *		WHILE mps = 0
+ * 			mps = getMPSIfExists(K, t, t-K+1, 1, t)
+ *			t <- t+1
+ *		END WHILE
+ *
+ *		RETURN mps
+ * END
+ *
+ * ***
+ *
+ * Algorithm getMPSIfExists
+ *
+ * INPUT:	The number of free elements K
+ *			The total sum for these K elements T
+ *			The value of the maximum element permited M
+ *			The product found until now	P
+ *			The total sum for the whole solution S
+ *
+ * OUTPUT:	The MPS (if it exists) or 0 (if MPS doesn't exist)
+ *
+ * BEGIN
+ *		IF (K = T)
+ *			RETURN P if P = S
+ *			RETURN 0
+ *		ELSE IF (K = 1)
+ *			RETURN P*T if P*T = S
+ *			RETURN 0
+ *		END IF
+ *
+ * 		FOR newM FROM M TO 1
+ * 			IF newM < T && isPromisingForMPS()
+ * 				n = getMPSIfExists(K-1, T-newM, newM, P*newM, S)
+ * 			
+ *				IF n != 0
+ *					RETURN n
+ *				END IF
+ * 			END IF
+ * 		END FOR
+ *
+ * 		RETURN 0
+ * END
+ *
+ * ***
+ *
+ * Algorithm isPromisingForMPS
+ *
+ * INPUT:	The next number of free elements nextK
+ *			The next total sum for these K elements nextT
+ *			The next value of the maximum element permited nextM
+ *			The next product found until now	nextP
+ *			The total sum for the whole solution S
+ *
+ * OUTPUT:
+ *
+ * BEGIN
+ *		IF (nextT >= nextK && nextT <= nextK*nextM && nextP <= S)
+ *			RETURN TRUE
+ *		ELSE
+ *			RETURN FALSE
+ *		END IF
+ * END
+ *
  */
 
 #include <stdint.h>
@@ -152,15 +241,22 @@ void printPossibility(const vector<uint32_t>& p)
 	cout << endl;
 }
 
+const bool promising(uint32_t k, uint32_t t, uint32_t m)
+{
+}
+
 vector<vector<uint32_t> > getAllPossibilities(uint32_t k, uint32_t t, uint32_t m)
 {
-	cout << "getAllPossibilities for k: " << k << ", t: " << t << ", m: " << m << endl;
+	//cout << "getAllPossibilities for k: " << k << ", t: " << t << ", m: " << m << endl;
 
 	vector<vector<uint32_t> > possibilities;
 
+	/*
 	if (k > t || k*m < t)
 		return possibilities;
 	else if (k == t)
+	*/
+	if (k == t)
 	{
 		possibilities.push_back(vector<uint32_t>(k, 1));
 		return possibilities;
@@ -221,7 +317,7 @@ uint32_t getMinimalProductSumNumber(const uint32_t& k)
 
 	do
 	{
-		cout << "try t: " << t << endl;
+		//cout << "try t: " << t << endl;
 		vector<vector<uint32_t> > ps = getAllPossibilities(k, t, t-k+1);
 
 		for (vector<vector<uint32_t> >::const_iterator it = ps.begin(); it != ps.end(); ++it)
@@ -238,28 +334,210 @@ uint32_t getMinimalProductSumNumber(const uint32_t& k)
 
 uint32_t getSumOfMinimalProductSumNumbers(const uint32_t& maxk)
 {
-	vector<bool> vec;
+	vector<bool> acc;
 
 	for (uint32_t k = 2; k <= maxk; k++)
 	{
 		cout << "k: " << k << endl;
 		uint32_t n = getMinimalProductSumNumber(k);
 
-		if (vec.size() < n+1)
-			vec.resize(n+1, false);
+		if (acc.size() < n+1)
+			acc.resize(n+1, false);
 
-		vec[n] = true;
+		acc[n] = true;
 	}
 
 	uint32_t sum = 0;
 
-	for (size_t i = 1; i < vec.size(); i++)
+	for (size_t i = 1; i < acc.size(); i++)
 	{
-		if (vec[i])
+		if (acc[i])
 			sum += i;
 	}
 
 	return sum;
+}
+
+
+
+/*
+ * Algorithm isPromisingForMPS
+ *
+ * INPUT:	The next number of free elements nextK
+ *			The next total sum for these K elements nextT
+ *			The next value of the maximum element permited nextM
+ *			The next product found until now	nextP
+ *			The total sum for the whole solution S
+ *
+ * OUTPUT:
+ *
+ * BEGIN
+ *		IF (nextT >= nextK && nextT <= nextK*nextM && nextP <= S)
+ *			RETURN TRUE
+ *		ELSE
+ *			RETURN FALSE
+ *		END IF
+ * END
+ *
+ */
+
+const bool isPromisingForMPS(uint32_t nextK, uint32_t nextT, uint32_t nextM, uint32_t nextP, uint32_t s)
+{
+	if (nextT >= nextK && nextT <= nextK*nextM && nextP <= s)
+		return true;
+	else
+		return false;
+}
+
+/*
+ * Algorithm getMPSIfExists
+ *
+ * INPUT:	The number of free elements K
+ *			The total sum for these K elements T
+ *			The value of the maximum element permited M
+ *			The product found until now	P
+ *			The total sum for the whole solution S
+ *
+ * OUTPUT:	The MPS (if it exists) or 0 (if MPS doesn't exist)
+ *
+ * BEGIN
+ *		IF (K = T)
+ *			RETURN P if P = S
+ *			RETURN 0
+ *		ELSE IF (K = 1)
+ *			RETURN P*T if P*T = S
+ *			RETURN 0
+ *		END IF
+ *
+ * 		FOR newM FROM M TO 1
+ * 			IF newM < T && isPromisingForMPS()
+ * 				n = getMPSIfExists(K-1, T-newM, newM, P*newM, S)
+ * 			
+ *				IF n != 0
+ *					RETURN n
+ *				END IF
+ * 			END IF
+ * 		END FOR
+ *
+ * 		RETURN 0
+ * END
+ */
+
+
+uint32_t getMPSIfExists(uint32_t k, uint32_t t, uint32_t m, uint32_t p, uint32_t s)
+{
+	if (k == t)
+	{
+		if (p == s)
+			return p;
+		else
+			return 0;
+	} else if (k == 1)
+	{
+		if (t*p == s)
+			return t*p;
+		else
+			return 0;
+	}
+
+	for (uint32_t nextM = m; nextM >= 1; nextM--)
+	{
+		if (nextM < t && isPromisingForMPS(k-1, t-nextM, nextM, p*nextM, s))
+		{
+			uint32_t n = getMPSIfExists(k-1, t-nextM, nextM, p*nextM, s);
+
+			if (n != 0)
+				return n;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Algorithm getMPS
+ *
+ * INPUT:	The number of elements K
+ * OUTPUT:	The MPS of k
+ *
+ * BEGIN
+ *		mps <- 0
+ *		t <- K
+ *
+ *		WHILE mps = 0
+ * 			mps = getMPSIfExists(K, t, t-K+1, 1, t)
+ *			t <- t+1
+ *		END WHILE
+ *
+ *		RETURN mps
+ * END
+ */
+
+uint32_t getMPS(uint32_t k)
+{
+	uint32_t mps = 0;
+	uint32_t t = k;
+
+	while (mps == 0)
+	{
+		mps = getMPSIfExists(k, t, t-k+1, 1, t);
+		t = t+1;
+	}
+
+	return mps;
+}
+
+void unionMPS(vector<bool>& acc, const uint32_t& n)
+{
+	if (acc.size() < n+1)
+		acc.resize(n+1, false);
+
+	acc[n] = true;
+}
+
+uint32_t sumMPS(vector<bool>& acc)
+{
+	uint32_t sum = 0;
+
+	for (size_t i = 1; i < acc.size(); i++)
+	{
+		if (acc[i])
+			sum += i;
+	}
+
+	return sum;
+}
+
+/*
+ * Algorithm getSumOfMPSs
+ *
+ * INPUT:	The maximum k: MAXK
+ * OUTPUT:	The sum of MPSs from k=2 to MAXK
+ *
+ * BEGIN
+ *		MPSs <- empty set
+ *
+ *		FOR k from 2 to MAXK
+ *			mps <- getMPS(k)
+ *			MPSs <- MPSs U { mps }
+ *		END FOR
+ *
+ *		RETURN  sum of MPSs's elements
+ * END
+ */
+
+uint32_t getSumOfMPSs(uint32_t maxK)
+{
+	vector<bool> acc;
+
+	for (uint32_t k = 2; k <= maxK; k++)
+	{
+		cout << "k: " << k << endl;
+		uint32_t n = getMPS(k);
+		unionMPS(acc, n);
+	}
+
+	return sumMPS(acc);
 }
 
 int main(int argc, char* argv[])
@@ -275,7 +553,8 @@ int main(int argc, char* argv[])
 	*/
 
 	uint32_t maxk = atoi(argv[1]);
-	cout << getSumOfMinimalProductSumNumbers(maxk) << endl;
+	//cout << getSumOfMinimalProductSumNumbers(maxk) << endl;
+	cout << getSumOfMPSs(maxk) << endl;
 
 	return 0;
 }
