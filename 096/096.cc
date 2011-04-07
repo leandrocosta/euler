@@ -51,20 +51,17 @@ pair<size_t,size_t>* getgoodpair(vector<unsigned int> mavailable[][9])
 
 const bool isnotvalid(unsigned int** sudoku)
 {
-	unsigned int nums_array[] = {1,2,3,4,5,6,7,8,9};
-
 	// check columns
 	for (size_t i = 0; i < 9; i++)
 	{
-		vector<unsigned int> nums (nums_array, nums_array + sizeof(nums_array)/sizeof(unsigned int));
+		unsigned int mask[] = {0,1,1,1,1,1,1,1,1,1};
 
 		for (size_t j = 0; j < 9; j++)
 		{
 			if (sudoku[i][j] != 0)
 			{
-				vector<unsigned int>::iterator it = find(nums.begin(), nums.end(), sudoku[i][j]);
-				if(it != nums.end())
-					nums.erase(it);
+				if (mask[sudoku[i][j]])
+					mask[sudoku[i][j]] = 0;
 				else
 					return true;
 			}
@@ -74,15 +71,14 @@ const bool isnotvalid(unsigned int** sudoku)
 	// check lines
 	for (size_t j = 0; j < 9; j++)
 	{
-		vector<unsigned int> nums (nums_array, nums_array + sizeof(nums_array)/sizeof(unsigned int));
+		unsigned int mask[] = {0,1,1,1,1,1,1,1,1,1};
 
 		for (size_t i = 0; i < 9; i++)
 		{
 			if (sudoku[i][j] != 0)
 			{
-				vector<unsigned int>::iterator it = find(nums.begin(), nums.end(), sudoku[i][j]);
-				if(it != nums.end())
-					nums.erase(it);
+				if (mask[sudoku[i][j]])
+					mask[sudoku[i][j]] = 0;
 				else
 					return true;
 			}
@@ -92,19 +88,16 @@ const bool isnotvalid(unsigned int** sudoku)
 	// check boxes
 	for (size_t x = 0; x < 9; x++)
 	{
-		//cout << "x: " << x << endl;
-		vector<unsigned int> nums (nums_array, nums_array + sizeof(nums_array)/sizeof(unsigned int));
+		unsigned int mask[] = {0,1,1,1,1,1,1,1,1,1};
 
 		for (size_t i = 3*(x/3); i < 3*(x/3)+3; i++)
 		{
 			for (size_t j = 3*(x%3); j < 3*(x%3)+3; j++)
 			{
-				//cout << "i: " << i << ", j: " << j << endl;
 				if (sudoku[i][j] != 0)
 				{
-					vector<unsigned int>::iterator it = find(nums.begin(), nums.end(), sudoku[i][j]);
-					if(it != nums.end())
-						nums.erase(it);
+					if (mask[sudoku[i][j]])
+						mask[sudoku[i][j]] = 0;
 					else
 						return true;
 				}
@@ -126,7 +119,8 @@ const bool issolution(unsigned int** sudoku)
 		}
 	}
 
-	return !isnotvalid(sudoku);
+	//return !isnotvalid(sudoku);
+	return true;
 }
 
 pair<size_t,size_t> getbestpair(vector<unsigned int> mavailable[][9])
@@ -147,6 +141,27 @@ pair<size_t,size_t> getbestpair(vector<unsigned int> mavailable[][9])
 	}
 
 	return make_pair<size_t,size_t>(best_i,best_j);
+}
+
+void applygoodpair(unsigned int** sudoku, vector<unsigned int> mavailable[][9], pair<size_t,size_t>* p)
+{
+	sudoku[p->first][p->second] = mavailable[p->first][p->second].front();
+
+	for (size_t i = 0; i < 9; i++)
+	{
+		for (size_t j = 0; j < 9; j++)
+		{
+			size_t x = (3 * (i/3)) + ((j/3)%3);
+			size_t xp = (3 * (p->first/3)) + ((p->second/3)%3);
+
+			if (i == p->first || j == p->second || x == xp)
+			{
+				vector<unsigned int>::iterator it = find(mavailable[i][j].begin(), mavailable[i][j].end(), sudoku[p->first][p->second]);
+				if (it != mavailable[i][j].end())
+					mavailable[i][j].erase(it);
+			}
+		}
+	}
 }
 
 unsigned int** getsolution(unsigned int** sudoku, vector<unsigned int> mavailable[][9])
@@ -180,24 +195,7 @@ unsigned int** getsolution(unsigned int** sudoku, vector<unsigned int> mavailabl
 	while ((p = getgoodpair(mavailable)) != NULL)
 	{
 		//cout << "we have good pairs: mavailable[" << p->first << "][" << p->second << "]: " << mavailable[p->first][p->second].front() << endl;
-
-		sudoku[p->first][p->second] = mavailable[p->first][p->second].front();
-
-		for (size_t i = 0; i < 9; i++)
-		{
-			for (size_t j = 0; j < 9; j++)
-			{
-				size_t x = (3 * (i/3)) + ((j/3)%3);
-				size_t xp = (3 * (p->first/3)) + ((p->second/3)%3);
-
-				if (i == p->first || j == p->second || x == xp)
-				{
-					vector<unsigned int>::iterator it = find(mavailable[i][j].begin(), mavailable[i][j].end(), sudoku[p->first][p->second]);
-					if (it != mavailable[i][j].end())
-						mavailable[i][j].erase(it);
-				}
-			}
-		}
+		applygoodpair(sudoku, mavailable, p);
 
 		/*
 		cout << "sudoku after applying good pairs:" << endl;
@@ -226,7 +224,7 @@ unsigned int** getsolution(unsigned int** sudoku, vector<unsigned int> mavailabl
 
 	if (isnotvalid(sudoku))
 	{
-		//cout << "invalid solution!" << endl;
+		cout << "invalid solution!" << endl;
 		return NULL;
 	}
 	else if (issolution(sudoku))
