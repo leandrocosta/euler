@@ -187,7 +187,10 @@ unsigned int** getsolution(unsigned int** sudoku, vector<unsigned int> mavailabl
 		{
 			for (size_t j = 0; j < 9; j++)
 			{
-				if (i == p->first || j == p->second)
+				size_t x = (3 * (i/3)) + ((j/3)%3);
+				size_t xp = (3 * (p->first/3)) + ((p->second/3)%3);
+
+				if (i == p->first || j == p->second || x == xp)
 				{
 					vector<unsigned int>::iterator it = find(mavailable[i][j].begin(), mavailable[i][j].end(), sudoku[p->first][p->second]);
 					if (it != mavailable[i][j].end())
@@ -279,7 +282,10 @@ unsigned int** getsolution(unsigned int** sudoku, vector<unsigned int> mavailabl
 						{
 							for(vector<unsigned int>::const_iterator it2 = mavailable[i][j].begin(); it2 != mavailable[i][j].end(); ++it2)
 							{
-								if ((i != bp.first && j != bp.second) || *it != *it2)
+								size_t x = (3 * (i/3)) + ((j/3)%3);
+								size_t xp = (3 * (bp.first/3)) + ((bp.second/3)%3);
+
+								if ((i != bp.first && j != bp.second && x != xp) || *it != *it2)
 									new_mavailable[i][j].push_back(*it2);
 							}
 						}
@@ -449,6 +455,7 @@ int main(int argc, char* argv[])
 
 				if (solution)
 				{
+					/*
 					cout << "solution:" << endl;
 
 					for (size_t i = 0; i < 9; i++)
@@ -460,6 +467,7 @@ int main(int argc, char* argv[])
 
 						cout << endl;
 					}
+					*/
 
 					unsigned long long num = (100*solution[0][0] + 10*solution[0][1] + solution[0][2]);
 					//cout << "num: " << num << endl;
