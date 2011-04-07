@@ -20,17 +20,24 @@
  -----------------
  6 9 3 3 7 3 3 9 6 = 49
 
+function from i,j to x:
+3*(i/3) + (j/3)%3
+
+function from x to i0,j0:
+i = 3*(x/3), j = 3*(x%3)
+
 BEGIN SolveSudoku
 	INPUT: a sudoku 9x9 matrix M
 	OUTPUT: a solved sudoku 9x9 matrix S
 		    NULL if the solution doesn't exist
 
 	MAVAILABLE <= empty 9x9 matrix
-	LBSENT <= array where LABSENT[i] = set of all absent numbers of line i
-	CBSENT <= array where CABSENT[j] = set of all absent numbers of column j
+	LABSENT <= array where LABSENT[i] = set of all absent numbers of line i
+	CABSENT <= array where CABSENT[j] = set of all absent numbers of column j
+	BABSENT <= array where BABSENT[x] = set of all absent numbers of box x
 
 	FOR each empty position (i,j) of M
-		MAVAILABLE(i,j) = intersection between LABSENT(i) and CABSENT(j)
+		MAVAILABLE(i,j) = intersection between LABSENT(i) and CABSENT(j) and BABSENT(x) // x = 3 * i/3 + (j/3)%3
 
 	RETURN getSolution(M, MAVAILABLE)
 END
@@ -48,7 +55,7 @@ BEGIN getSolution
 	ELSE IF (M is a solution)
 		RETURN M
 	ELSE
-		x,y = i,j from which MAVAIABLE(i,j) has the smallest
+		x,y = i,j from which MAVAIABLE(i,j) has the smallest set > 0
 
 		FOR EACH n FROM MAVAILABLE(x,y) DO
 			NEW_M = M
