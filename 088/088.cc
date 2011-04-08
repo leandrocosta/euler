@@ -532,7 +532,7 @@ uint32_t getSumOfMPSs(uint32_t maxK)
 
 	for (uint32_t k = 2; k <= maxK; k++)
 	{
-		cout << "k: " << k << endl;
+		//cout << "k: " << k << endl;
 		uint32_t n = getMPS(k);
 		unionMPS(acc, n);
 	}
