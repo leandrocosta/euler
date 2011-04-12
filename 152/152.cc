@@ -178,41 +178,62 @@ void search_for_solution(const vector<double>& data, const double cache1[], cons
 	cout << "searching for solutions..." << endl;
 
 	size_t data_size = data.size();
+	size_t i1, i2;
+	double v, value_i1_i2;
+	int mid;
 	vector<double>::const_iterator it = data.begin();
 
 	printf("\033[s");
 
 	for (size_t i = 0; i < data_size; i++)
 	{
-		printf("\033[u");
-		cout << setw(7) << setfill('0') << (i+1) << "/" << data_size << ", solutions: " << solutions;
-		cout.flush();
+		//printf("\033[u");
+		//cout << setw(7) << setfill('0') << (i+1) << "/" << data_size << ", solutions: " << solutions;
+		//cout.flush();
 
 		const double& value = *(it++);
 
-		double v = 0.25-value-cache2[cache2_size-1];
-		int mid = binary_search(cache1, cache1_size, v);
+		v = 0.25-value-cache2[cache2_size-1];
+		mid = binary_search(cache1, cache1_size, v);
 
+		/*
 		while (mid >= 0 && FLOAT_GE(cache1[mid], v))
 			mid--;
 
-		size_t i1 = mid+1;
+		i1 = mid+1;
+		*/
+		while (mid > 0 && FLOAT_GE(cache1[mid], v))
+			mid--;
+		i1 = mid;
+
+		//printf("\033[u");
+		//cout << setw(7) << setfill('0') << (i+1) << "/" << data_size << ", solutions: " << solutions << ", i1: " << i1;
+		//cout.flush();
 
 		if (i1 < cache1_size)
 		{
 			v = 0.25-value-cache1[i1];
 			mid = binary_search(cache2, cache2_size, v);
 
+			/*
 			while (mid < cache2_size && FLOAT_LE(cache2[mid], v))
 				mid++;
 
-			size_t i2 = mid-1;
+			i2 = mid-1;
+			*/
+			while (mid < cache2_size-1 && FLOAT_LE(cache2[mid], v))
+				mid++;
+			i2 = mid;
+
+			printf("\033[u");
+			cout << setw(7) << setfill('0') << (i+1) << "/" << data_size << ", solutions: " << solutions << ", i1: " << i1 << ", i2: " << i2 << ", v: " << value << ", v1: " << cache1[i1] << ", v2: " << cache2[i2] << ", v_i1_i2: " << (value+cache1[i1]+cache2[i2]);
+			cout.flush();
 
 			for (; i1 < cache1_size && FLOAT_LT(value+cache1[i1], 0.25); i1++)
 			{
 				if (i2 > 0)
 				{
-					double value_i1_i2 = value+cache1[i1]+cache2[i2];
+					value_i1_i2 = value+cache1[i1]+cache2[i2];
 
 					//while (i2 < cache2_size && FLOAT_EQ(cache2[i2], cache2[i2+1]))
 					//	i2++;
@@ -440,5 +461,6 @@ void try3(int argc, char* argv[])
 int main (int argc, char* argv[])
 {
 	cout.precision(FLOAT_PRECISION);
+	cout.setf(ios::fixed,ios::floatfield);
 	try3(argc, argv);
 }
