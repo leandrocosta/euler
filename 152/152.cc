@@ -9,14 +9,31 @@
 #include <iomanip>
 using namespace std;
 
-const unsigned int FLOAT_PRECISION = 15;
-const double DELTA = 1.0/pow(10,FLOAT_PRECISION+1);
+#include <limits>
 
-#define FLOAT_EQ(x,y) (fabs((x)-(y)) <= DELTA)
+const unsigned int FLOAT_PRECISION = 15;
+//const double DELTA = 1.0/pow(10,FLOAT_PRECISION+1);
+
+//#define FLOAT_EQ(x,y) (fabs((x)-(y)) <= DELTA)
+#define FLOAT_EQ(x,y) (std::fabs((x)-(y)) < std::numeric_limits<double>::epsilon())
+/*
 #define FLOAT_GT(x,y) ((x)-(y) > DELTA)
 #define FLOAT_GE(x,y) (FLOAT_GT((x),(y)) || FLOAT_EQ((x),(y)))
 #define FLOAT_LT(x,y) ((y)-(x) > DELTA)
 #define FLOAT_LE(x,y) (FLOAT_LT((x),(y)) || FLOAT_EQ((x),(y)))
+*/
+
+#define FLOAT_GT(x,y) ((x)-(y) >= std::numeric_limits<double>::epsilon())
+#define FLOAT_GE(x,y) (FLOAT_GT((x),(y)) || FLOAT_EQ((x),(y)))
+#define FLOAT_LT(x,y) ((y)-(x) >= std::numeric_limits<double>::epsilon())
+#define FLOAT_LE(x,y) (FLOAT_LT((x),(y)) || FLOAT_EQ((x),(y)))
+
+/*
+#define FLOAT_GT(x,y) ((x)>(y))
+#define FLOAT_GE(x,y) (FLOAT_GT((x),(y)) || FLOAT_EQ((x),(y)))
+#define FLOAT_LT(x,y) ((x)<(y))
+#define FLOAT_LE(x,y) (FLOAT_LT((x),(y)) || FLOAT_EQ((x),(y)))
+*/
 
 double* inverse_squares;
 double* max_possible_total;
@@ -52,14 +69,12 @@ size_t cache2_from = 34;
 size_t cache2_to = 60;
 */
 
-/*
 size_t max_value = 60;
 
 size_t cache1_from = 17;
 size_t cache1_to = 38;
 size_t cache2_from = 39;
 size_t cache2_to = 60;
-*/
 
 /*
 size_t max_value = 60;
@@ -79,12 +94,14 @@ size_t cache2_from = 40;
 size_t cache2_to = 60;
 */
 
+/*
 size_t max_value = 50;
 
 size_t cache1_from = 5;
 size_t cache1_to = 27;
 size_t cache2_from = 28;
 size_t cache2_to = 50;
+*/
 
 /*
 size_t max_value = 50;
